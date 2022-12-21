@@ -1,6 +1,3 @@
-#build this main container with the following command:
-#docker build -t ShitPostBot .
-
 ARG BASE_REGISTRY=registry.access.redhat.com
 ARG BASE_IMAGE=ubi8/ubi
 ARG BASE_TAG=8.7-1026
@@ -60,6 +57,10 @@ RUN mkdir python && \
 
 RUN set -eux; \
     python3 -m ensurepip --upgrade
+
+#If additional requirements are needed, use this
+#COPY requirements.txt /usr/tmp/
+#RUN python3 -m pip install -r requirements.txt
 
 FROM ${BASE_REGISTRY}/${FINAL_IMAGE}:${FINAL_TAG}
 
