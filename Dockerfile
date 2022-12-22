@@ -8,6 +8,7 @@ ARG FINAL_TAG=8.7-923.1669829893
 #pull firt stage
 FROM ${BASE_REGISTRY}/${BASE_IMAGE}:${BASE_TAG} as build
 
+#set the python version to download and install
 ENV PYTHON_VERSION 3.11.0
 
 WORKDIR /usr/tmp
@@ -65,7 +66,8 @@ RUN set -eux; \
 FROM ${BASE_REGISTRY}/${FINAL_IMAGE}:${FINAL_TAG}
 
 RUN microdnf update -y --nodocs && \
-    microdnf install glibc && \
+    microdnf install glibc \
+    shadow-utils.x86_64 && \
     microdnf clean all && \
     rm -rf /var/cache/dnf
 
@@ -77,32 +79,28 @@ ENV PYTHON_VERSION 3.11
 #fix links
 RUN set -eux; \
     cd /usr/local/bin && \
-    ln -s idle3.11 idle3 && \
+    ln -s idle$PYTHON_VERSION idle3 && \
     ln -s idle3 idle && \
-    ln -s pydoc3.11 pydoc3 && \
+    ln -s pydoc$PYTHON_VERSION pydoc3 && \
     ln -s pydoc3 pydoc && \
-    ln -s python3.11 Python3 && \
+    ln -s python$PYTHON_VERSION Python3 && \
     ln -s python3 python && \
-    ln -s python3.11-config python3-config && \
+    ln -s python$PYTHON_VERSION-config python3-config && \
     ln -s python3-config python-config && \
-    ln -s easy_install-3.11 easy-install-3 && \
+    ln -s easy_install-$PYTHON_VERSION easy-install-3 && \
     ln -s easy-install3 easy_install && \
-    ln -s 2to3-3.11 2to3-3 && \
+    ln -s 2to3-$PYTHON_VERSION 2to3-3 && \
     ln -s 2to3-3 2to3 && \
-    ln -s pip3.11 pip3 || true && \ 
+    ln -s pip$PYTHON_VERSION pip3 || true && \ 
     ln -s pip3 pip || true && \
     echo '/usr/local/lib' > /etc/ld.so.conf && \
     ldconfig
 
-COPY --from=build /usr/local/include/python3.11 /usr/local/include/python3.11
+COPY --from=build /usr/local/include/python$PYTHON_VERSION /usr/local/include/python$PYTHON_VERSION
 COPY --from=build /usr/local/lib /usr/local/lib
 COPY --from=build /usr/local/bin /usr/local/bin
-COPY --from=build /usr/sbin/groupadd /usr/sbin/
-COPY --from=build /usr/sbin/useradd /usr/sbin/
 
 COPY pip.conf /etc/
-
-RUN microdnf install shadow-utils.x86_64 -y
 
 RUN groupadd -g 1001 python; \
     useradd -r -u 1001 -m -s /sbin/nologin -g python python
@@ -110,7 +108,6 @@ RUN groupadd -g 1001 python; \
 USER 1001
 
 RUN microdnf remove shadow-utils.x86_64 -y; \
-    microdnf update -y --nodoc; \
     microdnf clean all; \
     rm -rf /var/cache/dnf
 
