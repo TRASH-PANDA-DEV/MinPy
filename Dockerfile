@@ -111,4 +111,4 @@ RUN microdnf remove shadow-utils.x86_64 -y; \
     microdnf clean all; \
     rm -rf /var/cache/dnf
 
-CMD ["python"]
+CMD tail -f /dev/null
